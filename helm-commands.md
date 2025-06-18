@@ -1,15 +1,14 @@
 -------------------------------------------------------------------------------------------------------------
 Package chart:
 helm package charts\imaging\ -d docs
-
-Generate the index file:
 helm repo index docs/ --url https://CAST-Extend.github.io/com.castsoftware.imaging.helm/
 
-Adding New Charts:
+Adding/Updating New Charts:
 When you want to add new charts or update existing ones:
 1. Add/update charts in the charts/ directory
 2. Package the updated charts:
-    helm package charts\imaging\ -d docs
+    helm package .\charts\imaging-323\ -d docs
+    helm package .\charts\imaging-330\ -d docs
 3. Update the index:
     helm repo index docs/ --url https://CAST-Extend.github.io/com.castsoftware.imaging.helm/ --merge docs/index.yaml
 4. Commit and push:
