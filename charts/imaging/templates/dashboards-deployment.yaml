@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    console.service: console-dashboards
+  name: console-dashboards
+  namespace: {{ .Release.Namespace }}  
+spec:
+  ports:
+    - name: "8087"
+      port: 8087
+      targetPort: 8087
+  selector:
+    console.service: console-dashboards  
+---  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    console.service: console-dashboards
+    version: {{ .Values.ConsoleIntegratedDashboardsImage.tag| default .Values.version }}
+  name: console-dashboards
+  namespace: {{ .Release.Namespace }}  
+spec:
+  replicas: {{ .Values.DashboardReplicaCount }}
+  selector:
+    matchLabels:
+      console.service: console-dashboards
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        console.network/aip-network: "true"
+        console.service: console-dashboards
+    spec:
+      initContainers:             
+        - name: console-control-panel-and-authentication-service-healthcheck
+          image: {{ .Values.InitUtilImage.name }}:{{ .Values.InitUtilImage.tag }}
+          imagePullPolicy: "{{ .Values.InitUtilImage.pullPolicy }}"
+          command:
+          - /bin/sh
+          - -c
+          - |
+            until curl -s http://console-control-panel.{{ .Release.Namespace }}.svc.cluster.local:8098/actuator/health | grep -q '"status":"UP"'; do
+              echo "Waiting for console-control-panel to be healthy..."
+              sleep 2
+            done
+            echo "console-control-panel is healthy!"
+            until curl -s http://console-authentication-service.{{ .Release.Namespace }}.svc.cluster.local:8092/actuator/health | grep -q '"status":"UP"'; do
+              echo "Waiting for console-authentication-service to be healthy..."
+              sleep 2
+            done
+            echo "console-authentication-service is healthy!"
+            until curl -s http://console-gateway-service.{{ .Release.Namespace }}.svc.cluster.local:8090/actuator/health | grep -q '"status":"UP"'; do
+              echo "Waiting for console-gateway-service to be healthy..."
+              sleep 2
+            done                          
+            echo "console-gateway-service is healthy!"    
+      containers:
+        - env:
+            - name: HOST_HOSTNAME
+              value: console-dashboards.{{ .Release.Namespace }}.svc.cluster.local
+            - name: PORT_DASHBOARDS
+              value: "8087"
+            - name: HOST_CONTROL_PANEL
+              value: console-control-panel.{{ .Release.Namespace }}.svc.cluster.local
+            - name: PORT_CONTROL_PANEL
+              value: "8098"
+{{- if .Values.CustomPostgres.enable }}
+            - name: DB_HOST
+              value: {{ .Values.CustomPostgres.host }}
+            - name: DB_PORT
+              value: "{{ .Values.CustomPostgres.port }}"               
+{{- else }}
+            - name: DB_HOST
+              value: console-postgres.{{ .Release.Namespace }}.svc.cluster.local
+            - name: DB_PORT
+              value: "2285"              
+{{- end }}
+            - name: DB_NAME
+              value: postgres
+            - name: DB_USER
+              value: operator
+            - name: DB_PASS
+              value: "{{ .Values.OperatorDbPasswordCrypted2 }}"
+            - name: HOST_GATEWAY
+              value: console-gateway-service.{{ .Release.Namespace }}.svc.cluster.local
+            - name: PORT_GATEWAY
+              value: "8090"
+            - name: HOST_AUTH_SERVICE
+              value: console-authentication-service.{{ .Release.Namespace }}.svc.cluster.local
+            - name: PORT_AUTH_SERVICE
+              value: "8092"
+          image: "{{ .Values.ConsoleIntegratedDashboardsImage.name }}:{{ .Values.ConsoleIntegratedDashboardsImage.tag}}"
+          imagePullPolicy: "{{ .Values.ConsoleIntegratedDashboardsImage.pullPolicy }}"
+          name: dashboards
+          ports:
+            - containerPort: 8087
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.DashboardsResources | nindent 12 }}
+      restartPolicy: Always
+{{- if .Values.UseImagePullSecrets }}       
+      imagePullSecrets:
+        - name: imagepull-sec  
+{{- end }}        
