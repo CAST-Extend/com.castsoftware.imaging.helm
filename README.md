@@ -3,9 +3,10 @@
 This project is used to host the CAST Imaging helm repository
 
 ## Examples of repo user commands 
-
-$ helm repo add castimaging https://CAST-Extend.github.io/com.castsoftware.imaging.helm/
-$ helm repo update
+'''
+helm repo add castimaging https://CAST-Extend.github.io/com.castsoftware.imaging.helm/
+helm repo update
+'''
 
 $ helm repo ls
 NAME        URL
