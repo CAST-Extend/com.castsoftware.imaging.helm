@@ -60,6 +60,7 @@ When you want to add new charts or update existing ones:
     ```
     helm package .\charts\imaging-323\ -d docs
     helm package .\charts\imaging-330\ -d docs
+    helm package .\charts\imaging-331\ -d docs
     ```
 3. Update the index:
     ```

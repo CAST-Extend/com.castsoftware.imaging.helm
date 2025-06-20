@@ -1,0 +1,250 @@
+# Default values for imaging-system.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+version: 3.3.1
+
+####################################################################################
+#
+# Define the namespace here
+namespace: castimaging-v3
+#
+# Kubernetes Provider: 
+# - For Azure:  AKS
+# - For AWS:    EKS
+# - For Google: GKE
+K8SProvider: AKS
+#
+# External network access
+FrontEndHost: https://my-host.com
+#
+# OPTIONAL - ExtendProxy
+ExtendProxy:
+  enable: false
+  exthostname: myextendhost.com # To be updated after deployment + run helm-upgrade.bat|sh
+  pubextendurl: "https://extend.castsoftware.com"
+#
+# OPTIONAL - Use custom Trust Store
+UseCustomTrustStore: false  
+#
+# OPTIONAL - Access Private Repo with Secret
+UseImagePullSecrets: false
+Base64EncodedDockerconfigjson: 
+#
+# OPTIONAL - Enable shared File Storage for analysis-node
+# Important note: Extra cluster configuration is required before you can enable this feature
+#                 Please refer to the documentation before modifying below parameters.
+AnalysisNodeFS:
+  enable: false  # Do not change if castimaging is already deployed
+  # AWS EKS specific parameters (will be ignored if K8SProvider is set to 'AKS')
+  EFSsystemID: fs-xxxxxxxxxxx
+  EFSaccessPointID: fsap-yyyyyyyyyy
+#
+# CAST Storage Class names
+CreateStorageClass: true       # Default: true
+DiskClassName: castimaging-ds  # Default: castimaging-ds
+FileClassName: castimaging-fs  # Default: castimaging-fs
+#
+# Postgres
+CastStorageService: # If enabled, postgres will be deployed in this helm chart
+  enable: true
+CustomPostgres:     # If enabled, external postgres server will be used 
+  enable: false     # IMPORTANT NOTE: init-db.sh script defined in console-postgres-configmap.yaml will need to be executed manually before deployment
+  host: console-postgres.castimaging-v3.svc.cluster.local
+  port: 2285
+#
+# Multi Tenancy
+MultiTenancyEnabled: false
+#
+# CAST Operator password has to be encrypted using CAST aip-encryption-tool (crypted2):
+OperatorDbPasswordCrypted2: CRYPTED2:90B1A6EC1618661401B724DB5AC34595
+####################################################################################
+
+# Disk Storage (DS) and File Storage (FS) Drivers
+#   EKS drivers:
+EKS_DSdriver: ebs.csi.aws.com
+EKS_FSdriver: efs.csi.aws.com
+#   AKS drivers:
+AKS_DSdriver: disk.csi.azure.com
+AKS_FSdriver: file.csi.azure.com
+#   GKE drivers:
+GKE_DSdriver: pd.csi.storage.gke.io
+GKE_FSdriver: filestore.csi.storage.gke.io
+
+#
+# Size of volumes
+#
+size_castdir: 100Gi                       # Default: 100Gi
+size_shared_datadir: 100Gi                # Default: 100Gi
+size_db_data: 128Gi                       # Default: 128Gi
+size_imagingviewer_v3_server_log: 1Gi     # Default: 1Gi
+size_imagingviewer_v3_etl_logs: 10Gi      # Default: 10Gi
+size_imagingviewer_v3_aimanager_logs: 2Gi # Default: 2Gi
+size_extendproxy_data: 10Gi               # Default: 10Gi
+size_neo4jdata: 100Gi                     # Default: 100Gi
+
+#
+# Console  
+#
+ConsolePostgresReplicaCount: 1
+SSOServiceReplicaCount: 1
+ConsoleServiceReplicaCount: 1
+GatewayServiceReplicaCount: 1
+AnalysisNodeReplicaCount: 1
+ControlPaneReplicaCount: 1
+AuthenticationServiceReplicaCount: 1
+IntegratedDashboardsReplicaCount: 1
+ExtendProxyReplicaCount: 1
+
+#
+# Viewer
+#
+ViewerNeo4jReplicaCount: 1
+ViewerServerReplicaCount: 1
+ViewerEtlReplicaCount: 1
+ViewerAiManagerReplicaCount: 1
+
+#
+# Console images
+#
+InitUtilImage:
+  name: castimaging/init-util
+  tag: "1.1"
+  pullPolicy: Always  
+ConsolePostgresImage:
+  name: postgres
+  tag: "15"
+  pullPolicy: IfNotPresent
+ConsoleSSOServiceImage:
+  name: castimaging/sso-service
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+ConsoleServiceImage:
+  name: castimaging/console
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+ConsoleGatewayServiceImage:
+  name: castimaging/gateway
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent  
+ConsoleAnalysisNodeImage:
+  name: castimaging/analysis-node
+  tag: "3.3.0_core8.4.4"
+  pullPolicy: IfNotPresent
+ConsoleControlPaneImage:
+  name: castimaging/admin-center
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+ConsoleAuthenticationServiceImage:
+  name: castimaging/auth-service
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+ConsoleIntegratedDashboardsImage:
+  name: castimaging/dashboards-v3
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+  
+#
+# Viewer images
+#
+ViewerNeo4jImage:
+  name: castimaging/neo4j
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+ViewerServiceImage:
+  name: castimaging/viewer
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+ViewerEtlImage:
+  name: castimaging/etl-service
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent  
+ViewerAiManagerImage:
+  name: castimaging/ai-service
+  tag: "3.3.0"
+  pullPolicy: IfNotPresent
+#
+# ExtendProxy Image
+#
+ExtendProxyImage:
+  name: castimaging/extend-proxy
+  tag: "1.0.0.5"
+  pullPolicy: IfNotPresent 
+
+#
+# Console resources
+#
+postgres_shmsize: 4G
+ConsolePostgresResources:
+  requests:
+    cpu: 0.5
+    memory: 8G
+SSOServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 1G
+ConsoleServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 500M
+GatewayServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 500M
+AnalysisNode_shmsize: 1G
+AnalysisNodeResources:
+  requests:
+    cpu: 0.5
+    memory: 8G
+ControlPanelResources:
+  requests:
+    cpu: 0.1
+    memory: 800M
+AuthenticationServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 500M
+IntegratedDashboardsResources:
+  requests:
+    cpu: 0.1
+    memory: 600M
+
+#
+# Viewer resources
+#
+ViewerNeo4jResources:
+  requests:
+    cpu: 0.5
+    memory: 16G
+ViewerServerServiceResources:
+  requests:
+    cpu: 0.2
+    memory: 500M
+ViewerEtlResources:
+  requests:
+    cpu: 0.2
+    memory: 500M
+ViewerAiManagerResources:
+  requests:
+    cpu: 0.1
+    memory: 400M    
+#
+# ExtendProxy resources
+#
+ExtendProxyResources:
+  requests:
+    cpu: 0.2
+    memory: 200M    
+
+#
+# Analysis folders (do not modify)
+#
+anadir:
+  datadirmount: /opt/cast/shared
+  deploy:       /opt/cast/shared/deploy
+  delivery:     /opt/cast/shared/delivery
+  common:       /opt/cast/shared/common-data
+  castdirmount: /usr/share/CAST
+  logs:         /usr/share/CAST/CAST/Logs
+  lisa:         /usr/share/CAST/CASTMS/LISA
+  extensions:   /usr/share/CAST/Extensions
