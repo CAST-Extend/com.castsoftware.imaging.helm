@@ -158,4 +158,4 @@ spec:
         resources:
           requests:
             storage: "{{ .Values.size_castdir }}"
-        storageClassName: "{{ .Values.DiskClassName }}"            
+        storageClassName: "{{ .Values.DiskClassName }}"
