@@ -59,8 +59,9 @@ When you want to add new charts or update existing ones:
 2. Package the updated charts:
     ```
     helm package .\charts\imaging-323\ -d docs
-    helm package .\charts\imaging-330\ -d docs
     helm package .\charts\imaging-331\ -d docs
+    helm package .\charts\imaging-340\ -d docs
+    helm package .\charts\imaging-341\ -d docs
     ```
 3. Update the index:
     ```
