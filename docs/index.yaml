@@ -3,9 +3,9 @@ entries:
   imaging:
   - apiVersion: v2
     appVersion: 3.4.2
-    created: "2025-09-02T18:11:01.3421442+02:00"
+    created: "2025-09-02T18:29:25.4312467+02:00"
     description: A Helm chart for Kubernetes
-    digest: 29548e86fa328a6b72a0913a8fa74cfd6f23310cd499d5e942f6464c9599b8d4
+    digest: 9f88ab56459a309e5f3ce6a7bc86a7acab2585cd1faece32b4b57388becafb2d
     name: imaging
     type: application
     urls:
@@ -13,9 +13,9 @@ entries:
     version: 3.4.2
   - apiVersion: v2
     appVersion: 3.4.1
-    created: "2025-09-02T18:11:01.3193963+02:00"
+    created: "2025-09-02T18:29:25.4053201+02:00"
     description: A Helm chart for Kubernetes
-    digest: 559283cd2e3899b9a9f92fb7647b5a7f0a7d2dc7558466447522a1ef65bf6d11
+    digest: 3224c1b4664c0bd5dae798b5cfa8dd3533ac3246b12db896b7769217f4ed6c0f
     name: imaging
     type: application
     urls:
@@ -23,9 +23,9 @@ entries:
     version: 3.4.1
   - apiVersion: v2
     appVersion: 3.4.0
-    created: "2025-09-02T18:11:01.2937093+02:00"
+    created: "2025-09-02T18:29:25.3776218+02:00"
     description: A Helm chart for Kubernetes
-    digest: bed2e6303e808794ec1d150c232e5c60748c25f45947e092052f2d54402045a1
+    digest: 12ea11cc58ba95673c0fd92dbbf57cc646571fcb4bd072238d6daf51f0f8a0d7
     name: imaging
     type: application
     urls:
@@ -33,9 +33,9 @@ entries:
     version: 3.4.0
   - apiVersion: v2
     appVersion: 3.3.1
-    created: "2025-09-02T18:11:01.2705059+02:00"
+    created: "2025-09-02T18:29:25.3336115+02:00"
     description: A Helm chart for Kubernetes
-    digest: 5875130f1d9650543864b2de0b61ca3bb65654fca295fcabcc0fc5262c60fbd3
+    digest: 79a5059bb9f2830f528bb6c495cc639ef0c31b235a8e536516ea0bbad6ffe3ef
     name: imaging
     type: application
     urls:
@@ -43,12 +43,12 @@ entries:
     version: 3.3.1
   - apiVersion: v2
     appVersion: 3.2.3
-    created: "2025-09-02T18:11:01.2395474+02:00"
+    created: "2025-09-02T18:29:25.3140719+02:00"
     description: A Helm chart for Kubernetes
-    digest: 7daa14da5ba690b4c303e8f22cb7e7008c15db4b88b3f2ce686ffbcd9e4c18a8
+    digest: 8e1c4427cdf3b250375973c98bb2cc7bfc29419cc00a256586c3c52b8acbb5c1
     name: imaging
     type: application
     urls:
     - https://CAST-Extend.github.io/com.castsoftware.imaging.helm/imaging-3.2.3.tgz
     version: 3.2.3
-generated: "2025-09-02T18:11:01.2090138+02:00"
+generated: "2025-09-02T18:29:25.285153+02:00"
