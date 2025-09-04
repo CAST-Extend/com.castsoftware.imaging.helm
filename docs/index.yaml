@@ -3,9 +3,9 @@ entries:
   imaging:
   - apiVersion: v2
     appVersion: 3.4.2
-    created: "2025-09-04T17:02:32.2294479+02:00"
+    created: "2025-09-04T17:49:44.7469808+02:00"
     description: A Helm chart for Kubernetes
-    digest: c951384ab521c89f21d2ea31b6241295e8f1acccb758fa13baf5dc7e0cf4b21b
+    digest: c5fe3027e04259cbb4dc24c1c7bd563b782830fdbda1a5f221b5f62a1b29429d
     name: imaging
     type: application
     urls:
@@ -13,7 +13,7 @@ entries:
     version: 3.4.2
   - apiVersion: v2
     appVersion: 3.4.1
-    created: "2025-09-04T17:02:32.2109938+02:00"
+    created: "2025-09-04T17:49:44.7337376+02:00"
     description: A Helm chart for Kubernetes
     digest: 3224c1b4664c0bd5dae798b5cfa8dd3533ac3246b12db896b7769217f4ed6c0f
     name: imaging
@@ -23,7 +23,7 @@ entries:
     version: 3.4.1
   - apiVersion: v2
     appVersion: 3.4.0
-    created: "2025-09-04T17:02:32.1954841+02:00"
+    created: "2025-09-04T17:49:44.6615286+02:00"
     description: A Helm chart for Kubernetes
     digest: 12ea11cc58ba95673c0fd92dbbf57cc646571fcb4bd072238d6daf51f0f8a0d7
     name: imaging
@@ -33,7 +33,7 @@ entries:
     version: 3.4.0
   - apiVersion: v2
     appVersion: 3.3.1
-    created: "2025-09-04T17:02:32.184795+02:00"
+    created: "2025-09-04T17:49:44.5807504+02:00"
     description: A Helm chart for Kubernetes
     digest: 79a5059bb9f2830f528bb6c495cc639ef0c31b235a8e536516ea0bbad6ffe3ef
     name: imaging
@@ -43,7 +43,7 @@ entries:
     version: 3.3.1
   - apiVersion: v2
     appVersion: 3.2.3
-    created: "2025-09-04T17:02:32.1720646+02:00"
+    created: "2025-09-04T17:49:44.503423+02:00"
     description: A Helm chart for Kubernetes
     digest: 8e1c4427cdf3b250375973c98bb2cc7bfc29419cc00a256586c3c52b8acbb5c1
     name: imaging
@@ -51,4 +51,4 @@ entries:
     urls:
     - https://CAST-Extend.github.io/com.castsoftware.imaging.helm/imaging-3.2.3.tgz
     version: 3.2.3
-generated: "2025-09-04T17:02:32.1569128+02:00"
+generated: "2025-09-04T17:49:44.4328669+02:00"
