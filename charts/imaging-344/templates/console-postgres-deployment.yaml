@@ -1,0 +1,105 @@
+{{- if .Values.CastStorageService.enable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    console.service: console-postgres
+  name: console-postgres
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - name: "2285"
+      port: 2285
+      targetPort: 5432
+  selector:
+    console.service: console-postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    console.service: console-postgres
+  name: console-postgres
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.ConsolePostgresReplicaCount }}
+  selector:
+    matchLabels:
+      console.service: console-postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        console.network/aip-network: "true"
+        console.service: console-postgres
+    spec: 
+      containers:
+        - env:
+            - name: POSTGRES_INITDB_ARGS
+              value: -E 'UTF-8' --lc-collate=C --lc-ctype=C
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: imaging-pwd-sec
+                  key: postgres-db-password               
+            - name: POSTGRES_USER
+              value: postgres
+          image: "{{ .Values.ConsolePostgresImage.name }}:{{ .Values.ConsolePostgresImage.tag}}"
+          imagePullPolicy: "{{ .Values.ConsolePostgresImage.pullPolicy }}"
+          name: console-postgres
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.ConsolePostgresResources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-data
+              subPath: postgres
+            - name: pgconf
+              mountPath: "/usr/share/postgresql/postgresql.conf.sample"
+              subPath: postgresql.conf.sample
+            - name: pginit
+              mountPath: "/docker-entrypoint-initdb.d/init-db.sh"               
+              subPath: init-db.sh
+            - name: dshm
+              mountPath: /dev/shm          
+            - name: db-creds
+              mountPath: /opt/secrets
+              readOnly: true               
+      restartPolicy: Always
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-data 
+        - name: pgconf
+          configMap:
+            name: console-v3-postgresqlconf
+        - name: pginit
+          configMap:
+            name: console-v3-init-db
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.postgres_shmsize }}            
+        - name: db-creds
+          secret:
+            secretName: imaging-pwd-sec
+{{- end }} 

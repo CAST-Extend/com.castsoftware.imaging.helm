@@ -2,8 +2,18 @@ apiVersion: v1
 entries:
   imaging:
   - apiVersion: v2
+    appVersion: 3.4.4
+    created: "2025-10-21T10:15:42.0200749+02:00"
+    description: A Helm chart for Kubernetes
+    digest: b474d567787446f6d84e61979e16b2ac4ce9f4960234732ce51fc1d5e19d0d6a
+    name: imaging
+    type: application
+    urls:
+    - https://CAST-Extend.github.io/com.castsoftware.imaging.helm/imaging-3.4.4.tgz
+    version: 3.4.4
+  - apiVersion: v2
     appVersion: 3.4.2
-    created: "2025-09-11T15:11:51.0255822+02:00"
+    created: "2025-10-21T10:15:42.0001445+02:00"
     description: A Helm chart for Kubernetes
     digest: 88aab69ed4aa5559734dd3f15d17ca8e98b51dbb9b2aa5614d9329de5e43c5d0
     name: imaging
@@ -13,7 +23,7 @@ entries:
     version: 3.4.2
   - apiVersion: v2
     appVersion: 3.4.1
-    created: "2025-09-11T15:11:50.9997742+02:00"
+    created: "2025-10-21T10:15:41.9813173+02:00"
     description: A Helm chart for Kubernetes
     digest: 3224c1b4664c0bd5dae798b5cfa8dd3533ac3246b12db896b7769217f4ed6c0f
     name: imaging
@@ -23,7 +33,7 @@ entries:
     version: 3.4.1
   - apiVersion: v2
     appVersion: 3.4.0
-    created: "2025-09-11T15:11:50.9764521+02:00"
+    created: "2025-10-21T10:15:41.9631806+02:00"
     description: A Helm chart for Kubernetes
     digest: 12ea11cc58ba95673c0fd92dbbf57cc646571fcb4bd072238d6daf51f0f8a0d7
     name: imaging
@@ -33,7 +43,7 @@ entries:
     version: 3.4.0
   - apiVersion: v2
     appVersion: 3.3.1
-    created: "2025-09-11T15:11:50.9502853+02:00"
+    created: "2025-10-21T10:15:41.9412431+02:00"
     description: A Helm chart for Kubernetes
     digest: 79a5059bb9f2830f528bb6c495cc639ef0c31b235a8e536516ea0bbad6ffe3ef
     name: imaging
@@ -43,7 +53,7 @@ entries:
     version: 3.3.1
   - apiVersion: v2
     appVersion: 3.2.3
-    created: "2025-09-11T15:11:50.9283124+02:00"
+    created: "2025-10-21T10:15:41.9211373+02:00"
     description: A Helm chart for Kubernetes
     digest: 8e1c4427cdf3b250375973c98bb2cc7bfc29419cc00a256586c3c52b8acbb5c1
     name: imaging
@@ -51,4 +61,4 @@ entries:
     urls:
     - https://CAST-Extend.github.io/com.castsoftware.imaging.helm/imaging-3.2.3.tgz
     version: 3.2.3
-generated: "2025-09-11T15:11:50.8951919+02:00"
+generated: "2025-10-21T10:15:41.9014468+02:00"
