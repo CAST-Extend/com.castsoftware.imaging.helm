@@ -1,0 +1,106 @@
+{{- if .Values.McpServer.enable }}
+kind: Service
+apiVersion: v1
+metadata:
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- if and .Values.CreateLoadBalancer .Values.UseInternalLoadBalancer }}
+    {{- if eq .Values.K8SProvider "AKS" }}
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    {{- else if eq .Values.K8SProvider "EKS" }}
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+    {{- else if eq .Values.K8SProvider "GKE" }}
+    networking.gke.io/load-balancer-type: "Internal"
+    {{- end }}
+  {{- end }}
+  name: mcp-server
+  labels:
+    app: mcp-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: http
+    port: 8282
+    targetPort: 8282
+  selector:
+    app: mcp-server
+{{- if .Values.CreateLoadBalancer }}
+  type: LoadBalancer
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mcp-server
+    version: {{ .Values.McpServerImage.tag | default .Values.version }}
+  name: mcp-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.McpServerReplicaCount }}
+  selector:
+    matchLabels:
+      app: mcp-server     
+  template:
+    metadata:
+      labels:
+        app: mcp-server
+    spec:
+      securityContext:
+        fsGroup: 1000                       
+      containers:
+        - env:
+  {{- if .Values.ContextUrl.enable }}
+            - name: APP_CONTEXT
+              value: {{ .Values.ContextUrl.appcontext }}
+  {{- end }}
+            - name: RELIES_ON_FRONTENDHOST # mcp-server should restart if value changes
+              value: {{ .Values.FrontEndHost }}
+          image: "{{ .Values.McpServerImage.name }}:{{ .Values.McpServerImage.tag}}"
+          imagePullPolicy: "{{ .Values.McpServerImage.pullPolicy }}"
+          command: ['sh', '-c', "/app/init.sh"]
+          name: mcp-server
+          livenessProbe:
+            httpGet:
+              path: /mcp/healthcheck
+              port: 8282
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /mcp/healthcheck
+              port: 8282
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.McpServerResources | nindent 12 }}
+          volumeMounts:
+            - name: logdir
+              mountPath: /app/logs
+              readOnly: false
+            - name: mcpserverappconfig
+              mountPath: /app/server/config/app.config
+              subPath: app.config
+  {{- if .Values.UseImagePullSecrets }}               
+      imagePullSecrets:
+        - name: imagepull-sec
+  {{- end }}        
+      volumes:
+        - name: logdir
+          persistentVolumeClaim:
+            claimName: pvc-mcpserver-logs          
+        - name: mcpserverappconfig
+          configMap:
+            name: mcpserverappconfig
+{{- end }}
