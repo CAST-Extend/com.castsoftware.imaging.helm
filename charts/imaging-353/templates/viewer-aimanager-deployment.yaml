@@ -1,0 +1,104 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: viewer-aimanager
+  labels:
+    app: viewer-aimanager
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: http
+    port: 8082
+    targetPort: 8082
+  selector:
+    app: viewer-aimanager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: viewer-aimanager
+    version: {{.Values.ViewerAiManagerImage.tag| default .Values.version}}
+  name: viewer-aimanager
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.ViewerAiManagerReplicaCount }}
+  selector:
+    matchLabels:
+      app: viewer-aimanager     
+  template:
+    metadata:
+      labels:
+        app: viewer-aimanager
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: neo4j-and-control-panel-healthcheck
+          image: {{ .Values.InitUtilImage.name }}:{{ .Values.InitUtilImage.tag }}
+          imagePullPolicy: "{{ .Values.InitUtilImage.pullPolicy }}"
+          command:
+          - /bin/sh
+          - -c
+          - |
+            until curl -s http://console-control-panel:8098/actuator/health | grep -q '"status":"UP"'; do
+              echo "Waiting for console-control-panel to be healthy..."
+              sleep 2
+            done
+            echo "console-control-panel is healthy!"  
+            until wget --no-verbose --spider http://viewer-neo4j:7474; do 
+              echo "Waiting for neo4j..."
+              sleep 2
+            done
+            echo "viewer-neo4j is up!"                           
+      containers:
+        - env:
+{{- if .Values.ContextUrl.enable }}
+            - name: APP_CONTEXT
+              value: {{ .Values.ContextUrl.appcontext }}
+{{- end }}
+          image: "{{ .Values.ViewerAiManagerImage.name }}:{{ .Values.ViewerAiManagerImage.tag}}"
+          imagePullPolicy: "{{ .Values.ViewerAiManagerImage.pullPolicy }}"
+          command: ['sh', '-c', "/opt/imaging/open_ai-manager/config/init.sh"]
+          name: viewer-aimanager
+          env:
+            - name: TZ
+              value: "UTC"
+            - name: EUREKA_HOST
+              value: "console-control-panel"
+            - name: EUREKA_PORT
+              value: "8098"
+            - name: SERVICE_HOST
+              value: "viewer-aimanager"
+            - name: AIMANAGER_PORT
+              value: "8082"
+            - name: NEO4J_BOLT_ENDPOINT
+              value: "viewer-neo4j:7687"
+            - name: LOG_LEVEL
+              value: "debug"
+            - name: ETL_PORT
+              value: "9001"
+            - name: NEO4J_PASSWORD
+              value: "imaging"
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.ViewerAiManagerResources | nindent 12 }}
+          volumeMounts:
+            - name: logdir
+              mountPath: /opt/imaging/open_ai-manager/logs
+              readOnly: false         
+{{- if .Values.UseImagePullSecrets }}               
+      imagePullSecrets:
+        - name: imagepull-sec
+{{- end }}        
+      volumes:
+        - name: logdir
+          persistentVolumeClaim:
+            claimName: pvc-imagingviewer-v3-aimanager-logs
+        - name: updated-config-volume
+          emptyDir: {}            
+        - name: db-creds
+          secret:
+            secretName: imaging-pwd-sec            
