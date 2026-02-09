@@ -1,0 +1,148 @@
+{{- if .Values.McpServer.enable }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: mcp-server
+  labels:
+    app: castimaging
+    imaging.group: viewer
+    imaging.service: mcp-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - name: http
+    port: 8282
+    targetPort: 8282
+  selector:
+    imaging.service: mcp-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: castimaging
+    imaging.group: viewer
+    imaging.service: mcp-server
+    version: {{ .Values.McpServerImage.tag | default .Values.version }}
+  name: mcp-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.McpServerReplicaCount }}
+  selector:
+    matchLabels:
+      imaging.service: mcp-server
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: castimaging
+        imaging.group: viewer
+        imaging.service: mcp-server
+    spec:
+  {{- if .Values.EnforceNodeAffinity }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.nodeSelectorAppcastimaging | nindent 12 }}
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.labelSelectorServiceNeo4j | nindent 12 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.podAffinityGroupViewer | nindent 12 }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.labelSelectorGroupConsole | nindent 12 }}
+  {{- end }}
+      securityContext:
+  {{- if .Values.RestrictedSecurityMode }}
+        fsGroup: 33
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+  {{- else }}
+        fsGroup: 1000
+  {{- end }}                    
+      containers:
+        - env:
+            - name: MCP_SERVER_PORT
+              value: "8282"
+  {{- if .Values.ContextUrl.enable }}
+            - name: APP_CONTEXT
+              value: {{ .Values.ContextUrl.appcontext }}
+  {{- end }}
+            - name: RELIES_ON_FRONTENDHOST # mcp-server should restart if value changes
+              value: {{ .Values.FrontEndHost }}
+          image: "{{ .Values.McpServerImage.name }}:{{ .Values.McpServerImage.tag}}"
+          imagePullPolicy: "{{ .Values.McpServerImage.pullPolicy }}"
+          command: ['sh', '-c', "/app/init.sh"]
+          name: mcp-server
+          livenessProbe:
+            httpGet:
+              path: /mcp/healthcheck
+              port: 8282
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /mcp/healthcheck
+              port: 8282
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+  {{- if .Values.RestrictedSecurityMode }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 33
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+  {{- end }}
+          resources:
+            {{- toYaml .Values.McpServerResources | nindent 12 }}
+          volumeMounts:
+  {{- if .Values.RestrictedSecurityMode }}
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run
+  {{- end }}
+            - name: logdir
+              mountPath: /app/logs
+              readOnly: false
+            - name: mcpserverappconfig
+              mountPath: /app/server/config/app.config
+              subPath: app.config
+  {{- if .Values.UseImagePullSecrets }}               
+      imagePullSecrets:
+        - name: imagepull-sec
+  {{- end }}        
+      volumes:
+  {{- if .Values.RestrictedSecurityMode }}
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+  {{- end }}
+        - name: logdir
+          persistentVolumeClaim:
+            claimName: pvc-mcpserver-logs          
+        - name: mcpserverappconfig
+          configMap:
+            name: mcpserverappconfig
+{{- end }}

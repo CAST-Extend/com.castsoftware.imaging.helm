@@ -1,0 +1,501 @@
+# Default values for imaging-system.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+version: 3.5.4
+
+####################################################################################
+#
+# Define the namespace here
+namespace: castimaging-v3
+#
+# Kubernetes Provider: 
+# - For Azure:  AKS
+# - For AWS:    EKS
+# - For Google: GKE
+K8SProvider: AKS
+#
+# External network access
+FrontEndHost: https://myhostname.com  # hostname with no context path 
+#                                    and no trailing "/" 
+#                                    E.g. https://myhostname.com 
+#
+# Ingress & LoadBalancer creation (for console-gateway, extendproxy, mcp-server):
+CreateIngress: false
+CreateLoadBalancer: true
+UseInternalLoadBalancer: false
+UseIstioGateway: false
+ExistingIstioGatewayName: ""  # Provide a value only if you want to use an already created istio Gateway 
+                              # > Example: ExistingIstioGatewayName: "aks-istio-ingress/gateway-wildcard"
+#
+# Context URL
+ContextUrl:
+  enable: false
+  appcontext: /mycontext   # Should start with "/"  Eg. "/cast"
+# Important notes: 
+#  . If you install the helm chart for the first time with ContextUrl.enable=true
+#     => Restart all Imaging services once after the initial startup (scale down / scale up all deployments/statefulsets)
+#  . If you want to update ContextUrl.enable or ContextUrl.appcontext variables while Imaging is already deployed
+#     1) Update values.yaml and run helm upgrade
+#     2) Restart all imaging services once (scale down / scale up all deployments/statefulsets)
+#
+# OPTIONAL - ExtendProxy
+ExtendProxy:
+  enable: false
+  exthostname: myextendhost.com
+#
+# OPTIONAL - MCP Server
+McpServer:
+  enable: false
+#
+# OPTIONAL - Use custom Trust Store in console-authentication-service to store certificate
+UseCustomTrustStore: false
+auth:
+  caCertificate: |
+    -----BEGIN CERTIFICATE-----
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    -----END CERTIFICATE-----
+#
+# OPTIONAL - Access Private Repo with Secret
+UseImagePullSecrets: false
+Base64EncodedDockerconfigjson: 
+#
+# OPTIONAL - Enable shared File Storage for analysis-node
+# Important note: Extra cluster configuration is required before you can enable this feature
+#                 Please refer to the documentation before modifying below parameters.
+AnalysisNodeFS:
+  enable: false  # Do not change if castimaging is already deployed
+  EFSsystemID: fs-xxxxxxxxxxx  # Required for AWS only
+#
+# CAST Storage Class names
+CreateStorageClass: true       # Default: true
+DiskClassName: castimaging-ds  # Default: castimaging-ds
+FileClassName: castimaging-fs  # Default: castimaging-fs
+#
+# Postgres
+CastStorageService: # If enabled, postgres will be deployed in this helm chart
+  enable: true
+CustomPostgres:
+  enable: false     # If enabled, external postgres server will be used, init-db-custom-pg.sh from console-postgres-configmap.yaml will be executed
+  host: mypostgreshostname
+  port: 2285
+#
+# Multi Tenancy
+MultiTenancyEnabled: false
+#
+# Neo4j memory configuration:
+NEO4J_server_memory_heap_initial__size: 12G
+NEO4J_server_memory_heap_max__size: 12G
+NEO4J_dbms_memory_transaction_total_max: 10G
+#
+# Database passwords: 
+#   Updating any password after deployment requires:
+#      1) Ensuring Imaging is up and running
+#      2) manually updating the password in postgres first (eg. ALTER USER operator WITH PASSWORD 'newpassword' )
+#      3) for the "operator" user only: updating the password in Console "Global configuration" / "CSS and Measurement settings" section
+#      4) updating the password here in values.yaml with encoding
+#      5) running helm upgrade
+#   Encoding command on Linux: echo -n "mypassword" | base64
+PostgresDbPassword: cG9zdGdyZXM=
+KeycloakDbPassword: a2V5Y2xvYWs=
+OperatorDbPassword: Q2FzdEFJUA==
+#
+Neo4jPassword: aW1hZ2luZw==
+#
+# CAST Operator password also has to be encrypted using cast-imaging-encryption-tool.jar GUI tool
+#   available in Linux installer https://extend.castsoftware.com/timeline#/extension?id=com.castsoftware.imaging.all.docker&version=3.5.4-funcrel
+OperatorDbPasswordCrypted2: CRYPTED2:90B1A6EC1618661401B724DB5AC34595
+#
+# Keycloak admin password
+#   Updating keycloak password after deployment requires:
+#      1) Ensuring Imaging is up and running
+#      2) manually updating the password in Keycloak admin GUI
+#      3) updating the password here in values.yaml with encoding
+#      4) running helm upgrade
+#   Encoding command on Linux: echo -n "mypassword" | base64
+KeycloakAdminPassword: YWRtaW4=
+#
+# If restricted security is enforced in your environment, set RestrictedSecurityMode to true
+# IMPORTANT: this setting cannot be changed after Imaging is deployed
+RestrictedSecurityMode: false
+####################################################################################
+
+# Disk Storage (DS) and File Storage (FS) Drivers
+#   EKS drivers:
+EKS_DSdriver: ebs.csi.aws.com
+EKS_FSdriver: efs.csi.aws.com
+#   AKS drivers:
+AKS_DSdriver: disk.csi.azure.com
+AKS_FSdriver: file.csi.azure.com
+#   GKE drivers:
+GKE_DSdriver: pd.csi.storage.gke.io
+GKE_FSdriver: filestore.csi.storage.gke.io
+
+#
+# Size of volumes
+#
+size_castdir: 100Gi                         # Default: 100Gi
+size_shared_datadir: 100Gi                  # Default: 100Gi
+size_db_data: 128Gi                         # Default: 128Gi
+size_imagingviewer_v3_server_log: 1Gi       # Default: 1Gi
+size_imagingviewer_v3_etl_logs: 10Gi        # Default: 10Gi
+size_imagingviewer_v3_etl_csvarchive: 10Gi  # Default: 10Gi
+size_imagingviewer_v3_aimanager_logs: 2Gi   # Default: 2Gi
+size_imagingviewer_v3_api_logs: 2Gi         # Default: 2Gi
+size_extendproxy_data: 10Gi                 # Default: 10Gi
+size_neo4jdata: 100Gi                       # Default: 100Gi
+size_mcpserver_logs: 2Gi                    # Default: 2Gi
+
+#
+# Console  
+#
+ConsolePostgresReplicaCount: 1
+SSOServiceReplicaCount: 1
+ConsoleServiceReplicaCount: 1
+GatewayServiceReplicaCount: 1
+AnalysisNodeReplicaCount: 1
+ControlPaneReplicaCount: 1
+AuthenticationServiceReplicaCount: 1
+DashboardReplicaCount: 1
+ExtendProxyReplicaCount: 1
+
+#
+# Viewer
+#
+ViewerNeo4jReplicaCount: 1
+ViewerServerReplicaCount: 1
+ViewerEtlReplicaCount: 1
+ViewerAiManagerReplicaCount: 1
+ViewerApiReplicaCount: 1
+McpServerReplicaCount: 1
+
+#
+# Console images
+#
+InitUtilImage:
+  name: castimaging/init-util
+  tag: "1.2.8"
+  pullPolicy: IfNotPresent  
+ConsolePostgresImage:
+  name: postgres
+  tag: "15"
+  pullPolicy: IfNotPresent
+ConsoleSSOServiceImage:
+  name: castimaging/sso-service
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ConsoleServiceImage:
+  name: castimaging/console
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ConsoleGatewayServiceImage:
+  name: castimaging/gateway
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent  
+ConsoleAnalysisNodeImage:
+  name: castimaging/analysis-node
+  tag: "3.5.4_core8.4.8"
+  pullPolicy: IfNotPresent
+ConsoleControlPaneImage:
+  name: castimaging/admin-center
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ConsoleAuthenticationServiceImage:
+  name: castimaging/auth-service
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ConsoleIntegratedDashboardsImage:
+  name: castimaging/dashboards-v3
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+  
+#
+# Viewer images
+#
+ViewerNeo4jImage:
+  name: castimaging/neo4j
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ViewerServiceImage:
+  name: castimaging/viewer
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ViewerEtlImage:
+  name: castimaging/etl-service
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent  
+ViewerAiManagerImage:
+  name: castimaging/ai-service
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+ViewerApiImage:
+  name: castimaging/imaging-apis
+  tag: "3.5.4"
+  pullPolicy: IfNotPresent
+McpServerImage:
+  name: castimaging/imaging-mcp-server
+  tag: "3.5.3"
+  pullPolicy: IfNotPresent 
+#
+# ExtendProxy Image
+#
+ExtendProxyImage:
+  name: castimaging/extend-proxy
+  tag: "2.2.6"
+  pullPolicy: IfNotPresent 
+
+#
+# Console resources
+#
+postgres_shmsize: 4G
+ConsolePostgresResources:
+  requests:
+    cpu: 0.5
+    memory: 8G
+  limits:
+    cpu: 2
+    memory: 16G
+SSOServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 1G
+  limits:
+    cpu: 1
+    memory: 2G 
+ConsoleServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 500M
+  limits:
+    cpu: 1
+    memory: 2G
+GatewayServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 500M
+  limits:
+    cpu: 1
+    memory: 2G
+AnalysisNode_shmsize: 1G
+AnalysisNodeResources:
+  requests:
+    cpu: 0.5
+    memory: 8G
+  limits:
+    cpu: 2
+    memory: 32G
+ControlPanelResources:
+  requests:
+    cpu: 0.1
+    memory: 800M
+  limits:
+    cpu: 1
+    memory: 2G
+AuthenticationServiceResources:
+  requests:
+    cpu: 0.1
+    memory: 500M
+  limits:
+    cpu: 1
+    memory: 1G
+IntegratedDashboardsResources:
+  requests:
+    cpu: 0.1
+    memory: 600M
+  limits:
+    cpu: 1
+    memory: 4G
+
+#
+# Viewer resources
+#
+ViewerNeo4jResources:
+  requests:
+    cpu: 0.5
+    memory: 16G
+  limits:
+    cpu: 4
+    memory: 32G
+ViewerServerServiceResources:
+  requests:
+    cpu: 0.2
+    memory: 500M
+  limits:
+    cpu: 1
+    memory: 8G
+ViewerEtlResources:
+  requests:
+    cpu: 0.2
+    memory: 500M
+  limits:
+    cpu: 1
+    memory: 8G
+ViewerAiManagerResources:
+  requests:
+    cpu: 0.1
+    memory: 400M
+  limits:
+    cpu: 1
+    memory: 2G
+ViewerApiResources:
+  requests:
+    cpu: 0.1
+    memory: 200M
+  limits:
+    cpu: 1
+    memory: 2G
+McpServerResources:
+  requests:
+    cpu: 0.2
+    memory: 400M
+  limits:
+    cpu: 1
+    memory: 2G
+#
+# ExtendProxy resources
+#
+ExtendProxyResources:
+  requests:
+    cpu: 0.2
+    memory: 200M
+  limits:
+    cpu: 1
+    memory: 2G
+#
+# InitContainer resources
+#
+InitContainerResources:
+  requests:
+    cpu: 0.1
+    memory: 100M
+  limits:
+    cpu: 1
+    memory: 1G
+
+#
+# Analysis folders (do not modify)
+#
+anadir:
+  datadirmount: /opt/cast/shared
+  deploy:       /opt/cast/shared/deploy
+  delivery:     /opt/cast/shared/delivery
+  common:       /opt/cast/shared/common-data
+  castdirmount: /usr/share/CAST
+  logs:         /usr/share/CAST/CAST/Logs
+  lisa:         /usr/share/CAST/CASTMS/LISA
+  extensions:   /usr/share/CAST/Extensions
+
+
+##########################################################################################
+# Node selection - DEDICATED castimaging kubernetes nodes for XL scenario
+# 4 nodes minimum required:
+#    node 1: postgres
+#    node 2: console services
+#    node 3: viewer services
+#    node 4: analysis-node
+#    node x: optional additional kubernetes nodes for as many additional analysis nodes
+# All dedicated castimaging kubernetes nodes / nodepool should have:
+#                       -> taint: workload=castimaging:NoSchedule 
+#                       -> label: app: castimaging
+##########################################################################################
+
+# Set to true to enforce dedicated kubernetes node scenario
+EnforceNodeAffinity: false
+
+nodeSelector:
+  app: castimaging
+
+# Tolerations - allow scheduling on tainted CAST nodes
+tolerations:
+  - key: workload
+    operator: Equal
+    value: castimaging
+    effect: NoSchedule
+
+# Affinity - REQUIRE castimaging nodes, prevent scheduling elsewhere
+nodeSelectorAppcastimaging:
+  nodeSelectorTerms:
+  - matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - castimaging
+
+labelSelectorServiceNeo4j:
+  - labelSelector:
+      matchExpressions:
+      - key: imaging.service
+        operator: In
+        values:
+        - viewer-neo4j
+    topologyKey: kubernetes.io/hostname
+
+labelSelectorAppcastimaging:
+  - labelSelector:
+      matchExpressions:
+      - key: app
+        operator: In
+        values:
+        - castimaging
+    topologyKey: kubernetes.io/hostname
+
+labelSelectorServiceSso:
+  - labelSelector:
+      matchExpressions:
+      - key: imaging.service
+        operator: In
+        values:
+        - console-sso-service
+    topologyKey: kubernetes.io/hostname
+
+labelSelectorServicePostgresAnalysisNode:
+  - labelSelector:
+      matchExpressions:
+      - key: imaging.service
+        operator: In
+        values:
+        - console-postgres
+        - console-analysis-node
+    topologyKey: kubernetes.io/hostname
+
+labelSelectorGroupViewer:
+  - labelSelector:
+      matchExpressions:
+      - key: imaging.group
+        operator: In
+        values:
+        - viewer
+    topologyKey: kubernetes.io/hostname
+
+podAffinityGroupConsole:
+  - weight: 100
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: imaging.group
+          operator: In
+          values:
+          - console
+      topologyKey: kubernetes.io/hostname
+
+labelSelectorGroupConsole:
+  - labelSelector:
+      matchExpressions:
+      - key: imaging.group
+        operator: In
+        values:
+        - console
+    topologyKey: kubernetes.io/hostname
+
+podAffinityGroupViewer:
+  - weight: 100
+    podAffinityTerm:
+      labelSelector:
+        matchExpressions:
+        - key: imaging.group
+          operator: In
+          values:
+          - viewer
+      topologyKey: kubernetes.io/hostname
