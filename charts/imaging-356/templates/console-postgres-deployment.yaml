@@ -1,0 +1,225 @@
+{{- if .Values.CastStorageService.enable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: castimaging
+    imaging.service: console-postgres
+  name: console-postgres
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - name: "2285"
+      port: 2285
+      targetPort: 5432
+  selector:
+    imaging.service: console-postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: castimaging
+    imaging.service: console-postgres
+  name: console-postgres
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.ConsolePostgresReplicaCount }}
+  selector:
+    matchLabels:
+      imaging.service: console-postgres
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        console.network/aip-network: "true"
+        app: castimaging
+        imaging.service: console-postgres
+    spec:  
+  {{- if .Values.EnforceNodeAffinity }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.nodeSelectorAppcastimaging | nindent 12 }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.labelSelectorAppcastimaging | nindent 12 }}
+  {{- end }}
+  {{- if .Values.RestrictedSecurityMode }}
+      securityContext:
+        fsGroup: 999
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+  {{- end }}
+      containers:
+        - env:
+  {{- if .Values.RestrictedSecurityMode }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+  {{- end }}
+            - name: POSTGRES_INITDB_ARGS
+              value: -E 'UTF-8' --lc-collate=C --lc-ctype=C
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: imaging-pwd-sec
+                  key: postgres-db-password
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+          image: "{{ .Values.ConsolePostgresImage.name }}:{{ .Values.ConsolePostgresImage.tag}}"
+          imagePullPolicy: "{{ .Values.ConsolePostgresImage.pullPolicy }}"
+          name: console-postgres
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 20
+            successThreshold: 1
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+  {{- if .Values.RestrictedSecurityMode }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+  {{- end }}
+          resources:
+            {{- toYaml .Values.ConsolePostgresResources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-data
+              subPath: postgres
+            - name: pgconf
+              mountPath: "/usr/share/postgresql/postgresql.conf.sample"
+              subPath: postgresql.conf.sample
+            - name: pginit
+              mountPath: "/docker-entrypoint-initdb.d/init-db.sh"               
+              subPath: init-db.sh
+            - name: dshm
+              mountPath: /dev/shm          
+            - name: db-creds
+              mountPath: /opt/secrets
+              readOnly: true
+  {{- if .Values.RestrictedSecurityMode }}
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run
+  {{- end }}               
+      restartPolicy: Always
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-data 
+        - name: pgconf
+          configMap:
+            name: console-v3-postgresqlconf
+        - name: pginit
+          configMap:
+            name: console-v3-init-db
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.postgres_shmsize }}            
+        - name: db-creds
+          secret:
+            secretName: imaging-pwd-sec
+  {{- if .Values.RestrictedSecurityMode }}
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+  {{- end }}
+{{- end }}
+---
+{{- if .Values.CustomPostgres.enable }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: custom-postgres-init-job
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+  {{- if .Values.EnforceNodeAffinity }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.nodeSelectorAppcastimaging | nindent 12 }}
+  {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: postgres-init
+          image: "{{ .Values.InitUtilImage.name }}:{{ .Values.InitUtilImage.tag}}"
+          env:
+            - name: PGHOST
+              value: "{{ .Values.CustomPostgres.host }}"
+            - name: PGPORT
+              value: "{{ .Values.CustomPostgres.port }}"             
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+
+          command: ["/bin/bash", "-c", "/tmp/init-db-custom-pg.sh"]
+          volumeMounts:
+            - name: init-db-custom-pg
+              mountPath: "/tmp/init-db-custom-pg.sh"               
+              subPath: init-db-custom-pg.sh
+            - name: db-creds
+              mountPath: /opt/secrets
+              readOnly: true 
+  {{- if .Values.RestrictedSecurityMode }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+  {{- end }}
+          resources:
+            {{- toYaml .Values.InitContainerResources | nindent 12 }}
+      volumes:
+        - name: init-db-custom-pg
+          configMap:
+            name: init-db-custom-pg
+            defaultMode: 0775
+        - name: db-creds
+          secret:
+            secretName: imaging-pwd-sec
+{{- end }}
