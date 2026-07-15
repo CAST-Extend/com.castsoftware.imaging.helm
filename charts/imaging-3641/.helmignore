@@ -1,0 +1,16 @@
+exclude_*
+config/
+scripts/
+*/left/
+*.bat
+*.pdf
+*/docker*
+*/ex_*
+ex_*
+kub-*
+.git
+imaging_backup*/
+*-priv.*
+*-priv/
+*-custom.*
+*-custom/

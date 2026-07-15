@@ -1,0 +1,20 @@
+{{- if .Values.McpServer.enable }}
+apiVersion: v1
+data:
+  app.config: |-
+    HOST_CONTROL_PANEL="console-control-panel"
+    PORT_CONTROL_PANEL=8098
+    IMAGING_PAGE_SIZE=1000
+    IMAGING_DISPLAY_PAGE_SIZE=20
+    IMAGING_CODE=False
+    DEBUG_MODE=false
+    IMAGING_DOMAIN="default"
+    CONTROL_PANEL_SSL_ENABLED=false
+    SERVICE_HOST="mcp-server"
+    #
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: mcpserverappconfig
+  namespace: {{.Release.Namespace}}
+{{- end }}
