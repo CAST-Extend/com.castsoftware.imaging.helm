@@ -1,0 +1,30 @@
+{{/* ContextUrl is only compatible with CreateIngress or UseIstioGateway or UseGatewayAPI */}}
+{{- if and .Values.ContextUrl.enable (not (or .Values.CreateIngress .Values.UseIstioGateway .Values.UseGatewayAPI )) }}
+  {{- fail "ERROR: ContextUrl can only be enabled when CreateIngress UseIstioGateway or UseGatewayAPI is set to true." }}
+{{- end }}
+
+
+{{/* Only one of CreateIngress, UseIstioGateway, UseApplicationGateway, UseGatewayAPI can be enabled at a time */}}
+{{- $ingressCount := 0 }}
+{{- if .Values.CreateIngress }}{{ $ingressCount = add $ingressCount 1 }}{{- end }}
+{{- if .Values.UseIstioGateway }}{{ $ingressCount = add $ingressCount 1 }}{{- end }}
+{{- if .Values.UseApplicationGateway }}{{ $ingressCount = add $ingressCount 1 }}{{- end }}
+{{- if .Values.UseGatewayAPI }}{{ $ingressCount = add $ingressCount 1 }}{{- end }}
+{{- if gt $ingressCount 1 }}
+  {{- fail "ERROR: Only one of the following can be set to true at a time: CreateIngress, UseIstioGateway, UseApplicationGateway, UseGatewayAPI." }}
+{{- end }}
+
+{{/* UseApplicationGateway is only supported on AKS */}}
+{{- if and .Values.UseApplicationGateway (ne .Values.K8SProvider "AKS") }}
+  {{- fail "ERROR: UseApplicationGateway can only be used when K8SProvider is set to AKS." }}
+{{- end }}
+
+{{/* EnforceNodeAffinity or EnforceBalancedAffinity, not both */}}
+{{- if and .Values.EnforceNodeAffinity .Values.EnforceBalancedAffinity }}
+  {{- fail "ERROR: EnforceNodeAffinity and EnforceBalancedAffinity cannot both be set to true." }}
+{{- end }}
+
+{{/* CastStorageService.enable or CustomPostgres.enable, not both */}}
+{{- if and .Values.CastStorageService.enable .Values.CustomPostgres.enable }}
+  {{- fail "ERROR: CastStorageService.enable and CustomPostgres.enable cannot both be set to true." }}
+{{- end }}

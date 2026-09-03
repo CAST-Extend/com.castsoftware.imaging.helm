@@ -1,0 +1,349 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: viewer-server
+  labels:
+    app: castimaging
+    imaging.group: viewer
+    imaging.service: viewer-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8080
+{{- if .Values.serverhttpNodePort }} 
+      nodePort: {{ .Values.serverhttpNodePort }}
+{{- end }}
+    - name: login
+      port: 9000
+      targetPort: 9000
+{{- if .Values.serverloginNodePort }} 
+      nodePort: {{ .Values.serverloginNodePort }}
+{{- end }}
+{{- if or .Values.serverhttpNodePort .Values.serverloginNodePort .Values.allNodePort }} 
+  type: NodePort
+{{- end }}
+  selector:
+    imaging.service: viewer-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: castimaging
+    imaging.group: viewer
+    imaging.service: viewer-server
+    version: {{.Values.ViewerServiceImage.tag| default .Values.version}}
+  name: viewer-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.ViewerServerReplicaCount }}
+  selector:
+    matchLabels:
+      imaging.service: viewer-server
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: castimaging
+        imaging.group: viewer
+        imaging.service: viewer-server
+    spec:
+{{- if .Values.EnforceNodeAffinity }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          {{- toYaml .Values.nodeSelectorAppcastimaging | nindent 12 }}
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.labelSelectorServiceNeo4j | nindent 12 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.podAffinityGroupViewer | nindent 12 }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.labelSelectorGroupConsole | nindent 12 }}
+{{- end }}
+{{- if .Values.EnforceBalancedAffinity }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.podAffinityGroupConsole | nindent 12 }}
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- toYaml .Values.podAffinityGroupViewer | nindent 12 }}
+{{- end }}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+{{- if .Values.RestrictedSecurityMode }}
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+{{- end }}
+      initContainers:
+{{- if .Values.RestrictedSecurityMode }}    
+        - name: init-folders
+          image: "{{.Values.ViewerServiceImage.name}}:{{.Values.ViewerServiceImage.tag}}"
+          imagePullPolicy: "{{.Values.ViewerServiceImage.pullPolicy}}"
+          command:
+          - /bin/sh
+          - -c
+          - |
+            rm -rf /server-volume/*
+            rm -rf /server-config-volume/*
+            rm -rf /nginx-volume/*
+            rm -rf /web-volume/*
+            cp -r /opt/imaging/imaging-service/* /server-volume/ || true
+            cp -r /opt/imaging/config/* /server-config-volume/ || true
+            cp -r /etc/nginx/* /nginx-volume/ || true
+            cp -r /opt/imaging/web/* /web-volume/ || true
+          volumeMounts:
+            - name: server-data
+              mountPath: /server-volume 
+            - name: server-config
+              mountPath: /server-config-volume     
+            - name: nginx
+              mountPath: /nginx-volume
+            - name: web
+              mountPath: /web-volume
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            {{- toYaml .Values.InitContainerResources | nindent 12 }}
+{{- end }}  
+        - name: neo4j-and-control-panel-healthcheck
+          image: {{ .Values.InitUtilImage.name }}:{{ .Values.InitUtilImage.tag }}
+          imagePullPolicy: "{{ .Values.InitUtilImage.pullPolicy }}"
+          command:
+          - /bin/sh
+          - -c
+          - |
+            until curl -s --fail --max-time 5 http://console-control-panel:8098/actuator/health | grep -q '"status":"UP"'; do
+              echo "Waiting for console-control-panel to be healthy..."
+              sleep 2
+            done
+            echo "console-control-panel is healthy!"  
+            until curl -s --fail --max-time 5 http://viewer-neo4j:7474 > /dev/null 2>&1; do
+              echo "Waiting for neo4j..."
+              sleep 2
+            done
+            echo "viewer-neo4j is up!" 
+{{- if .Values.RestrictedSecurityMode }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+{{- end }}
+          resources:
+            {{- toYaml .Values.InitContainerResources | nindent 12 }}
+        - name: neo4j-migration
+          image: "{{.Values.ViewerNeo4jImage.name}}:{{.Values.ViewerNeo4jImage.tag}}"
+          imagePullPolicy: "{{.Values.ViewerNeo4jImage.pullPolicy}}"
+          env:
+            - name: NEO4J_BOLT_ENDPOINT
+              value: "bolt://viewer-neo4j:7687"
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | default "imaging-pwd-sec" }}
+                  key: neo4j-password
+          command:
+          - /bin/bash
+          - -c
+          - |
+{{- if .Values.SKIP_NEO4J_MIGRATION }}
+            echo "Skipping neo4j migration."
+{{- else }}
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            LOG_FILE="/tmp/migration_${TIMESTAMP}.log"
+
+            # Check if 'imaging' database exists
+            echo "Checking if 'imaging' database exists..."
+            DB_EXISTS=$(cypher-shell -u neo4j -p "$NEO4J_PASSWORD" -a "$NEO4J_BOLT_ENDPOINT" \
+                'SHOW DATABASES YIELD name RETURN name' 2>/dev/null | grep -w "imaging" | wc -l | tr -d '[:space:]')
+
+            if [ "$DB_EXISTS" = "0" ]; then
+                echo "'imaging' database does not exist. Skipping migration."
+                exit 0
+            fi
+
+            # Wait until 'imaging' database is ONLINE
+            echo "Waiting for 'imaging' database to become ONLINE..."
+            while true; do
+                DB_STATUS=$(cypher-shell -u neo4j -p "$NEO4J_PASSWORD" -a "$NEO4J_BOLT_ENDPOINT" \
+                    'SHOW DATABASE imaging YIELD name, currentStatus RETURN currentStatus' 2>/dev/null | tail -n 1 | tr -d '[:space:]"')
+
+                if [ "$DB_STATUS" = "online" ]; then
+                    echo "'imaging' database is ONLINE."
+                    break
+                fi
+                echo "Database status: ${DB_STATUS:-unknown}. Retrying in 5s..."
+                sleep 5
+            done
+
+            # Run neo4j migration
+            echo "Running migration..."
+            /var/lib/neo4j/config/migration/Neo4jdatamigrate --log "$LOG_FILE" --database neo4j --all --migrate --silent --host viewer-neo4j
+            echo "Migration completed."
+            echo "-------------------------------------------------"
+            echo "Migration Log"
+            echo "-------------------------------------------------"
+            cat "$LOG_FILE"
+            echo "-------------------------------------------------"
+{{- end }}
+            echo "Done."
+{{- if .Values.RestrictedSecurityMode }}
+          volumeMounts:
+            - name: migration-tmp
+              mountPath: /tmp
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 7474
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+{{- end }}
+          resources:
+            {{- toYaml .Values.InitContainerResources | nindent 12 }}
+      containers:
+        - image: "{{ .Values.ViewerServiceImage.name }}:{{ .Values.ViewerServiceImage.tag}}"
+          imagePullPolicy: "{{ .Values.ViewerServiceImage.pullPolicy }}"
+          command: ['sh', '-c', "mkdir -p /run/nginx && /opt/imaging/config/init.sh"]
+          name: viewer-server
+          env:
+{{- range $key, $value := .Values.SERVER }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+{{- end }}
+            - name: TZ
+              value: "UTC"
+            - name: EUREKA_HOST
+              value: "console-control-panel"
+            - name: EUREKA_PORT
+              value: "8098"
+            - name: SERVICE_HOST
+              value: "viewer-server"
+            - name: SERVER_PORT
+              value: "9000"
+            - name: NEO4J_BOLT_ENDPOINT
+              value: "bolt://viewer-neo4j:7687"
+            - name: LOG_LEVEL
+              value: "debug"
+            - name: FE_PORT
+              value: "8083"
+            - name: QUERY_TIMEOUT
+              value: "60"
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | default "imaging-pwd-sec" }}
+                  key: neo4j-password
+{{- if .Values.ContextUrl.enable }}
+            - name: APP_CONTEXT
+              value: {{ .Values.ContextUrl.appcontext }}
+{{- end }}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 9000
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /healthcheck
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 10 
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 9000
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 10
+            successThreshold: 1
+{{- if .Values.RestrictedSecurityMode }}
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+{{- end }}
+          resources:
+            {{- toYaml .Values.ViewerServerServiceResources | nindent 12 }}
+          volumeMounts:
+{{- if .Values.RestrictedSecurityMode }}
+            - name: tmp
+              mountPath: /tmp
+            - name: var-tmp
+              mountPath: /var/tmp
+            - name: server-data
+              mountPath: /opt/imaging/imaging-service
+            - name: web
+              mountPath: /opt/imaging/web
+            - name: server-config
+              mountPath: /opt/imaging/config
+            - name: nginx
+              mountPath: /etc/nginx
+            - name: nginx-run
+              mountPath: /var/run
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-lib-tmp
+              mountPath: /var/lib/nginx/tmp
+{{- end }}
+            - name: log
+              mountPath: /opt/imaging/imaging-service/logs
+            - name: servernginxconf
+              mountPath: /opt/imaging/config/nginx/conf/nginx.conf
+              subPath: nginx.conf
+{{- if .Values.UseImagePullSecrets }}               
+      imagePullSecrets:
+        - name: imagepull-sec
+{{- end }}        
+      volumes:
+        - name: log
+          persistentVolumeClaim:
+            claimName: pvc-imagingviewer-v3-server-log
+        - name: servernginxconf
+          configMap:
+            name: servernginxconf
+{{- if .Values.RestrictedSecurityMode }}
+        - name: server-data
+          emptyDir: {}
+        - name: web
+          emptyDir: {}
+        - name: server-config
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: var-tmp
+          emptyDir: {}
+        - name: nginx
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-lib-tmp
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: migration-tmp
+          emptyDir: {}
+{{- end }}
