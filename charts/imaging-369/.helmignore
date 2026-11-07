@@ -1,0 +1,18 @@
+exclude_*
+config/
+scripts/
+*/left/
+*.bat
+*.pdf
+*/docker*
+*/ex_*
+ex_*
+kub-*
+.git
+imaging_backup*/
+*-priv.*
+*-priv/
+*-custom.*
+*-custom/
+# Unit tests for the autoscaler script - not part of the chart
+files/test_*.py

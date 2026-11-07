@@ -2,8 +2,18 @@ apiVersion: v1
 entries:
   imaging:
   - apiVersion: v2
+    appVersion: 3.6.9
+    created: "2026-11-07T10:17:07.6053901+01:00"
+    description: A Helm chart for Kubernetes
+    digest: 6185346ba8f16b7dc6ddd01141af6f20836854455fe3b170bf7b68ed28bd14f5
+    name: imaging
+    type: application
+    urls:
+    - https://CAST-Extend.github.io/com.castsoftware.imaging.helm/imaging-3.6.9.tgz
+    version: 3.6.9
+  - apiVersion: v2
     appVersion: 3.6.8
-    created: "2026-10-09T17:36:33.4653863+02:00"
+    created: "2026-11-07T10:17:07.6023675+01:00"
     description: A Helm chart for Kubernetes
     digest: e0459a2939d63c774f8351c2509c0425a060dd10e6a265048a0fea69abd3f134
     name: imaging
@@ -13,7 +23,7 @@ entries:
     version: 3.6.8
   - apiVersion: v2
     appVersion: 3.6.7
-    created: "2026-10-09T17:36:33.4605473+02:00"
+    created: "2026-11-07T10:17:07.5975374+01:00"
     description: A Helm chart for Kubernetes
     digest: aebb27376dd02bbc01db60f40c04f7813f500657b5aafb7094037b568c0cd899
     name: imaging
@@ -23,7 +33,7 @@ entries:
     version: 3.6.7
   - apiVersion: v2
     appVersion: 3.6.6
-    created: "2026-10-09T17:36:33.4562051+02:00"
+    created: "2026-11-07T10:17:07.5371471+01:00"
     description: A Helm chart for Kubernetes
     digest: 134edab0609d2345e9b56ce83f0226ace45481b3af41d078c7b4ee7844e84a71
     name: imaging
@@ -33,7 +43,7 @@ entries:
     version: 3.6.6
   - apiVersion: v2
     appVersion: 3.6.5
-    created: "2026-10-09T17:36:33.451477+02:00"
+    created: "2026-11-07T10:17:07.4647745+01:00"
     description: A Helm chart for Kubernetes
     digest: a25d5f22c7e5321d494af2443e3f9eff772b21fd7f3e1f793c6b49802ccc56c5
     name: imaging
@@ -43,7 +53,7 @@ entries:
     version: 3.6.5
   - apiVersion: v2
     appVersion: 3.6.4
-    created: "2026-10-09T17:36:33.4444379+02:00"
+    created: "2026-11-07T10:17:07.4115197+01:00"
     description: A Helm chart for Kubernetes
     digest: faf2d22ec3a5a0221dd9603d9ca6c35660c0d71e914775ce4d5cc92f9578f131
     name: imaging
@@ -53,7 +63,7 @@ entries:
     version: 3.6.4
   - apiVersion: v2
     appVersion: 3.6.4+1
-    created: "2026-10-09T17:36:33.4395977+02:00"
+    created: "2026-11-07T10:17:07.3612584+01:00"
     description: A Helm chart for Kubernetes
     digest: eb4c0866fa2c6c6b2b07434214aa3a3c6885976e5eecf0bfe3983c4744f33fd1
     name: imaging
@@ -63,7 +73,7 @@ entries:
     version: 3.6.4+1
   - apiVersion: v2
     appVersion: 3.6.3
-    created: "2026-10-09T17:36:33.4390888+02:00"
+    created: "2026-11-07T10:17:07.3312841+01:00"
     description: A Helm chart for Kubernetes
     digest: a9adf78c7f004af8ff26eb8492ca3ced187338a97f3f8249a37f2b1e0f912e07
     name: imaging
@@ -73,7 +83,7 @@ entries:
     version: 3.6.3
   - apiVersion: v2
     appVersion: 3.6.2
-    created: "2026-10-09T17:36:33.4279449+02:00"
+    created: "2026-11-07T10:17:07.2991507+01:00"
     description: A Helm chart for Kubernetes
     digest: 46bd0a55c87dccbf62eeef161c36cac94b68375278378c90c3891d7089a88122
     name: imaging
@@ -83,7 +93,7 @@ entries:
     version: 3.6.2
   - apiVersion: v2
     appVersion: 3.6.1
-    created: "2026-10-09T17:36:33.4279449+02:00"
+    created: "2026-11-07T10:17:07.2555642+01:00"
     description: A Helm chart for Kubernetes
     digest: c49cff8b28b1a8f84acb96394e7873c5508e52a21925e706d8bf21d7c264bdeb
     name: imaging
@@ -93,7 +103,7 @@ entries:
     version: 3.6.1
   - apiVersion: v2
     appVersion: 3.6.0
-    created: "2026-10-09T17:36:33.4274386+02:00"
+    created: "2026-11-07T10:17:07.2147431+01:00"
     description: A Helm chart for Kubernetes
     digest: c8b9df6f2ba59b56e55cf031c769cdaf35ff5adbee7099532304e56f1ea81003
     name: imaging
@@ -103,7 +113,7 @@ entries:
     version: 3.6.0
   - apiVersion: v2
     appVersion: 3.5.9
-    created: "2026-10-09T17:36:33.4229585+02:00"
+    created: "2026-11-07T10:17:07.1801934+01:00"
     description: A Helm chart for Kubernetes
     digest: fd0cca4d0618417d2f2f2ce022dc8f24833dd1551ed01409a9f1de5c8da625e8
     name: imaging
@@ -113,7 +123,7 @@ entries:
     version: 3.5.9
   - apiVersion: v2
     appVersion: 3.5.8
-    created: "2026-10-09T17:36:33.4195833+02:00"
+    created: "2026-11-07T10:17:07.1453525+01:00"
     description: A Helm chart for Kubernetes
     digest: 04a962b066e3ac7191a965ca364b8f5a3f26f546e907378b8475c563fd94eca2
     name: imaging
@@ -123,7 +133,7 @@ entries:
     version: 3.5.8
   - apiVersion: v2
     appVersion: 3.5.6
-    created: "2026-10-09T17:36:33.4140621+02:00"
+    created: "2026-11-07T10:17:07.1069692+01:00"
     description: A Helm chart for Kubernetes
     digest: 86a7e4736ad09c57aa158000b7e86a4d81d7954a8c725c3d4f766f7da4ec136b
     name: imaging
@@ -133,7 +143,7 @@ entries:
     version: 3.5.6
   - apiVersion: v2
     appVersion: 3.5.5
-    created: "2026-10-09T17:36:33.4071901+02:00"
+    created: "2026-11-07T10:17:07.0693891+01:00"
     description: A Helm chart for Kubernetes
     digest: 718618d5d9925dec609758bf50cfbe9e0fa4b43d6ae2aba1b22e7c8b055484c3
     name: imaging
@@ -143,7 +153,7 @@ entries:
     version: 3.5.5
   - apiVersion: v2
     appVersion: 3.5.4
-    created: "2026-10-09T17:36:33.4071901+02:00"
+    created: "2026-11-07T10:17:07.0402248+01:00"
     description: A Helm chart for Kubernetes
     digest: 81155f28886665586ba95d0aa3b6a21799bc6d4ecfe043143a9947998db59099
     name: imaging
@@ -153,7 +163,7 @@ entries:
     version: 3.5.4
   - apiVersion: v2
     appVersion: 3.5.3
-    created: "2026-10-09T17:36:33.4043194+02:00"
+    created: "2026-11-07T10:17:07.0069417+01:00"
     description: A Helm chart for Kubernetes
     digest: 51db06911ddec3a39b65ca1ab6a1838823f1962022d2b170c66135e50c8b23ac
     name: imaging
@@ -163,7 +173,7 @@ entries:
     version: 3.5.3
   - apiVersion: v2
     appVersion: 3.5.0
-    created: "2026-10-09T17:36:33.4015836+02:00"
+    created: "2026-11-07T10:17:06.9790438+01:00"
     description: A Helm chart for Kubernetes
     digest: 9e87d4352a270b8913069855c8106dc69ffb869416865bc0bf76f467ebed3d8d
     name: imaging
@@ -173,7 +183,7 @@ entries:
     version: 3.5.0
   - apiVersion: v2
     appVersion: 3.4.5
-    created: "2026-10-09T17:36:33.3986407+02:00"
+    created: "2026-11-07T10:17:06.9525013+01:00"
     description: A Helm chart for Kubernetes
     digest: 5282c23976eb23a821b78631513bf278e4ed41a0c6eb904f6d44c464699ed480
     name: imaging
@@ -183,7 +193,7 @@ entries:
     version: 3.4.5
   - apiVersion: v2
     appVersion: 3.4.4
-    created: "2026-10-09T17:36:33.396266+02:00"
+    created: "2026-11-07T10:17:06.9177678+01:00"
     description: A Helm chart for Kubernetes
     digest: b474d567787446f6d84e61979e16b2ac4ce9f4960234732ce51fc1d5e19d0d6a
     name: imaging
@@ -193,7 +203,7 @@ entries:
     version: 3.4.4
   - apiVersion: v2
     appVersion: 3.4.2
-    created: "2026-10-09T17:36:33.3923437+02:00"
+    created: "2026-11-07T10:17:06.8821005+01:00"
     description: A Helm chart for Kubernetes
     digest: 88aab69ed4aa5559734dd3f15d17ca8e98b51dbb9b2aa5614d9329de5e43c5d0
     name: imaging
@@ -203,7 +213,7 @@ entries:
     version: 3.4.2
   - apiVersion: v2
     appVersion: 3.4.1
-    created: "2026-10-09T17:36:33.3889845+02:00"
+    created: "2026-11-07T10:17:06.8380711+01:00"
     description: A Helm chart for Kubernetes
     digest: 3224c1b4664c0bd5dae798b5cfa8dd3533ac3246b12db896b7769217f4ed6c0f
     name: imaging
@@ -213,7 +223,7 @@ entries:
     version: 3.4.1
   - apiVersion: v2
     appVersion: 3.4.0
-    created: "2026-10-09T17:36:33.3843992+02:00"
+    created: "2026-11-07T10:17:06.8061444+01:00"
     description: A Helm chart for Kubernetes
     digest: 12ea11cc58ba95673c0fd92dbbf57cc646571fcb4bd072238d6daf51f0f8a0d7
     name: imaging
@@ -223,7 +233,7 @@ entries:
     version: 3.4.0
   - apiVersion: v2
     appVersion: 3.3.1
-    created: "2026-10-09T17:36:33.3811892+02:00"
+    created: "2026-11-07T10:17:06.7718286+01:00"
     description: A Helm chart for Kubernetes
     digest: 79a5059bb9f2830f528bb6c495cc639ef0c31b235a8e536516ea0bbad6ffe3ef
     name: imaging
@@ -233,7 +243,7 @@ entries:
     version: 3.3.1
   - apiVersion: v2
     appVersion: 3.2.3
-    created: "2026-10-09T17:36:33.3772395+02:00"
+    created: "2026-11-07T10:17:06.7410491+01:00"
     description: A Helm chart for Kubernetes
     digest: 8e1c4427cdf3b250375973c98bb2cc7bfc29419cc00a256586c3c52b8acbb5c1
     name: imaging
@@ -241,4 +251,4 @@ entries:
     urls:
     - https://CAST-Extend.github.io/com.castsoftware.imaging.helm/imaging-3.2.3.tgz
     version: 3.2.3
-generated: "2026-10-09T17:36:33.3734498+02:00"
+generated: "2026-11-07T10:17:06.7027182+01:00"
